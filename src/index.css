@@ -62,44 +62,60 @@
   --shadow-xl:  0 16px 40px rgba(0,0,0,0.6);
 }
 
-/* ── Reset ────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+/* ── Base overrides (after Tailwind reset) ────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
 
-body {
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-base);
-  color: var(--text-primary);
-  line-height: 1.5;
-  overflow-x: hidden;
-}
+  html { scroll-behavior: smooth; }
 
-/* ── Scrollbar ────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-base) !important;
+    color: var(--text-primary) !important;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
 
-/* ── Utility classes ──────────────────────────────────────── */
-.bg-base      { background-color: var(--bg-base); }
-.bg-surface   { background-color: var(--bg-surface); }
-.bg-hover     { background-color: var(--bg-hover); }
-.bg-active    { background-color: var(--bg-active); }
-.border-token { border-color: var(--border); }
-.text-primary   { color: var(--text-primary); }
-.text-secondary { color: var(--text-secondary); }
-.text-muted     { color: var(--text-muted); }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-.shadow-card { box-shadow: var(--shadow-sm); }
-.shadow-panel { box-shadow: var(--shadow-md); }
-.shadow-modal { box-shadow: var(--shadow-xl); }
+  /* Custom utility classes */
+  .bg-base      { background-color: var(--bg-base); }
+  .bg-surface   { background-color: var(--bg-surface); }
+  .bg-hover     { background-color: var(--bg-hover); }
+  .bg-active    { background-color: var(--bg-active); }
+  .border-token { border-color: var(--border); }
+  .text-primary   { color: var(--text-primary); }
+  .text-secondary { color: var(--text-secondary); }
+  .text-muted     { color: var(--text-muted); }
+  .shadow-card  { box-shadow: var(--shadow-sm); }
+  .shadow-panel { box-shadow: var(--shadow-md); }
+  .shadow-modal { box-shadow: var(--shadow-xl); }
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
 
-/* ── Focus ring ───────────────────────────────────────────── */
-.focus-ring:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
+  /* Input date/time */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    opacity: 0.5;
+    cursor: pointer;
+    filter: invert(0);
+  }
+  .dark input[type="date"]::-webkit-calendar-picker-indicator,
+  .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+
+  select option {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+  }
 }
 
 /* ── Animations ───────────────────────────────────────────── */
@@ -111,22 +127,4 @@ body {
   background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border-soft) 50%, var(--bg-hover) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-}
-
-/* ── Input date/time native fix ───────────────────────────── */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  opacity: 0.5;
-  cursor: pointer;
-  filter: invert(0);
-}
-.dark input[type="date"]::-webkit-calendar-picker-indicator,
-.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-}
-
-/* ── Select native fix ────────────────────────────────────── */
-select option {
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
 }

@@ -38,7 +38,7 @@ function PerfilTab() {
   const [photoPreview, setPhotoPreview] = useState(user?.photo || null)
   const fileRef = useRef()
 
-  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm({
+  const { register, handleSubmit, reset } = useForm({
     defaultValues: {
       name:           user?.name        || '',
       crp:            user?.crp         || '',
@@ -105,8 +105,7 @@ function PerfilTab() {
       <Section title="Dados pessoais" icon={User}>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <Input label="Nome completo" error={errors.name?.message}
-              {...register('name', { required: 'Nome obrigatório' })} />
+            <Input label="Nome completo" {...register('name')} />
           </div>
           <Input label="Data de nascimento" type="date"
             max={new Date().toISOString().split('T')[0]}
@@ -152,8 +151,7 @@ function PerfilTab() {
         </div>
       </Section>
 
-      <Button type="submit" loading={loading} disabled={!isDirty && photoPreview === user?.photo}
-        className="w-full justify-center py-3">
+      <Button type="submit" loading={loading} className="w-full justify-center py-3">
         <Save size={15} /> Salvar perfil
       </Button>
     </form>
