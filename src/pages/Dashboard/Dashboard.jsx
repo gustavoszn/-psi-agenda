@@ -109,7 +109,7 @@ export default function Dashboard() {
     [appointments])
 
   const getPatient = id => patients.find(p => p.id === id)
-  const firstName = user?.name?.split(' ')[0]?.replace('Dra.','').trim() || 'Doutora'
+  const firstName = user?.name?.split(' ').find(w => !w.includes('.') && w.length > 1) || user?.name || 'Isabela'
 
   if (loading) return (
     <div className="p-4 sm:p-6 space-y-6">
