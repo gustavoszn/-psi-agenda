@@ -27,24 +27,49 @@ export function DataProvider({ children }) {
 
   useEffect(() => { load() }, [load])
 
-  // Check upcoming appointments for notifications
+  const [dismissedIds, setDismissedIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('psi_dismissed_notifs') || '[]') } catch { return [] }
+  })
+
   useEffect(() => {
+    const THRESHOLDS = [
+      { key: '24h',  minutes: 24 * 60, label: 'amanhã',        urgency: 'low'    },
+      { key: '1h',   minutes: 60,      label: 'em 1 hora',     urgency: 'medium' },
+      { key: '15min',minutes: 15,      label: 'em 15 minutos', urgency: 'high'   },
+    ]
+
     const check = () => {
       const now = new Date()
-      const upcoming = appointments.filter(a => {
+      const notifs = []
+
+      appointments.forEach(a => {
+        if (['cancelled', 'missed', 'done'].includes(a.status)) return
         const diff = (new Date(a.date) - now) / 60000
-        return diff > 0 && diff <= 30 && a.status !== 'cancelled'
+        if (diff <= 0 || diff > 24 * 60) return
+
+        const threshold = [...THRESHOLDS].reverse().find(t => diff <= t.minutes)
+        if (!threshold) return
+
+        const notifId = `${a.id}_${threshold.key}`
+        if (dismissedIds.includes(notifId)) return
+
+        notifs.push({
+          id:        notifId,
+          apptId:    a.id,
+          patientId: a.patientId,
+          date:      a.date,
+          label:     threshold.label,
+          urgency:   threshold.urgency,
+        })
       })
-      setNotifications(upcoming.map(a => ({
-        id: a.id,
-        message: `Consulta em ${Math.round((new Date(a.date) - now) / 60000)} minutos`,
-        type: 'upcoming',
-      })))
+
+      setNotifications(notifs)
     }
+
     check()
     const interval = setInterval(check, 60000)
     return () => clearInterval(interval)
-  }, [appointments])
+  }, [appointments, dismissedIds])
 
   const addPatient = async (data) => {
     try {
@@ -108,7 +133,14 @@ export function DataProvider({ children }) {
     } catch (e) { toast.error(e.message); throw e }
   }
 
-  const dismissNotification = (id) => setNotifications(prev => prev.filter(n => n.id !== id))
+  const dismissNotification = (id) => {
+    setDismissedIds(prev => {
+      const next = [...prev, id]
+      localStorage.setItem('psi_dismissed_notifs', JSON.stringify(next))
+      return next
+    })
+    setNotifications(prev => prev.filter(n => n.id !== id))
+  }
 
   return (
     <DataContext.Provider value={{

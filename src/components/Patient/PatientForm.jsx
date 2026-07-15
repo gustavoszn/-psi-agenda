@@ -51,55 +51,23 @@ const searchAddress = async (q) => {
   } catch { return [] }
 }
 
-// --- Date picker dd/mm/aaaa ---
-const days   = Array.from({ length: 31 }, (_, i) => i + 1)
-const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
-const currentYear = new Date().getFullYear()
-const years  = Array.from({ length: 100 }, (_, i) => currentYear - i)
-
-const selectStyle = (error) => ({
-  background: 'var(--bg-hover)',
-  border: `1px solid ${error ? 'var(--accent)' : 'var(--border)'}`,
-  color: 'var(--text-primary)',
-  borderRadius: '0.75rem',
-  padding: '0.5rem 0.75rem',
-  fontSize: '0.875rem',
-  width: '100%',
-  outline: 'none',
-  appearance: 'auto',
-})
-
 function DatePicker({ value, onChange, error }) {
-  const parts = value ? value.split('-') : ['', '', '']
-  const [year, setYear]   = useState(parts[0] || '')
-  const [month, setMonth] = useState(parts[1] ? String(parseInt(parts[1])) : '')
-  const [day, setDay]     = useState(parts[2] ? String(parseInt(parts[2])) : '')
-
-  const emit = (d, m, y) => {
-    if (d && m && y) onChange(`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`)
-    else onChange('')
-  }
-
   return (
     <div className="space-y-1">
       <label className="block text-xs font-medium text-secondary">Data de nascimento</label>
-      <div className="grid grid-cols-3 gap-2">
-        <select style={selectStyle(error)} value={day}
-          onChange={e => { setDay(e.target.value); emit(e.target.value, month, year) }}>
-          <option value="">Dia</option>
-          {days.map(d => <option key={d} value={d}>{String(d).padStart(2,'0')}</option>)}
-        </select>
-        <select style={selectStyle(error)} value={month}
-          onChange={e => { setMonth(e.target.value); emit(day, e.target.value, year) }}>
-          <option value="">Mês</option>
-          {months.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
-        </select>
-        <select style={selectStyle(error)} value={year}
-          onChange={e => { setYear(e.target.value); emit(day, month, e.target.value) }}>
-          <option value="">Ano</option>
-          {years.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
-      </div>
+      <input
+        type="date"
+        value={value || ''}
+        onChange={e => onChange(e.target.value)}
+        max={new Date().toISOString().split('T')[0]}
+        className="w-full px-3 py-2 rounded-xl text-sm transition-all focus:outline-none focus:ring-2"
+        style={{
+          background: 'var(--bg-hover)',
+          border: `1px solid ${error ? 'var(--accent)' : 'var(--border)'}`,
+          color: value ? 'var(--text-primary)' : 'var(--text-muted)',
+          '--tw-ring-color': error ? 'var(--accent-light)' : 'var(--brand-light)',
+        }}
+      />
       {error && <p className="text-xs" style={{ color: 'var(--accent-text)' }}>{error}</p>}
     </div>
   )

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Plus, Video } from 'lucide-react'
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, isSameDay, isToday, getHours, getMinutes } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -13,21 +13,24 @@ import Button from '@/components/UI/Button'
 import { useModal } from '@/hooks/useModal'
 
 const HOUR_HEIGHT = 64
-const START_HOUR = 7
-const END_HOUR = 22
+const START_HOUR  = 7
+const END_HOUR    = 19
+// slots clicáveis: 07, 08 ... 18  (12 slots × 64px = 768px)
+// label 19:00 aparece como fechamento no fim
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => i + START_HOUR)
+const GRID_HEIGHT = HOURS.length * HOUR_HEIGHT  // 768px
 
 function ApptBlock({ appt, patient, onClick }) {
-  const start = new Date(appt.date)
+  const start  = new Date(appt.date)
   const top    = ((getHours(start) - START_HOUR) + getMinutes(start) / 60) * HOUR_HEIGHT
   const height = Math.max((appt.duration / 60) * HOUR_HEIGHT, 26)
 
   const bg =
-    appt.status === 'confirmed'  ? { background: '#d1ead8', borderLeft: '3px solid #5a8a6a' } :
-    appt.status === 'cancelled'  ? { background: '#f5e0e0', borderLeft: '3px solid #c97b7b', opacity: 0.7 } :
-    appt.status === 'done'       ? { background: '#ece8e3', borderLeft: '3px solid #b0a49a', opacity: 0.65 } :
-    appt.status === 'missed'     ? { background: '#fde8d8', borderLeft: '3px solid #d4845a', opacity: 0.75 } :
-                                   { background: '#ddeaf0', borderLeft: '3px solid #6a9ab0' }
+    appt.status === 'confirmed' ? { background: '#d1ead8', borderLeft: '3px solid #5a8a6a' } :
+    appt.status === 'cancelled' ? { background: '#f5e0e0', borderLeft: '3px solid #c97b7b', opacity: 0.7 } :
+    appt.status === 'done'      ? { background: '#ece8e3', borderLeft: '3px solid #b0a49a', opacity: 0.65 } :
+    appt.status === 'missed'    ? { background: '#fde8d8', borderLeft: '3px solid #d4845a', opacity: 0.75 } :
+                                  { background: '#ddeaf0', borderLeft: '3px solid #6a9ab0' }
 
   return (
     <motion.div
@@ -43,28 +46,53 @@ function ApptBlock({ appt, patient, onClick }) {
   )
 }
 
+// Coluna lateral com os labels de hora (07:00 … 19:00)
+function HourLabels() {
+  return (
+    <div className="w-14 flex-shrink-0 border-r border-token">
+      {HOURS.map(h => (
+        <div key={h} style={{ height: HOUR_HEIGHT }} className="flex items-start justify-end pr-2 pt-1">
+          <span className="text-xs text-muted">{String(h).padStart(2,'0')}:00</span>
+        </div>
+      ))}
+      {/* label de fechamento 19:00 */}
+      <div style={{ height: 20 }} className="flex items-start justify-end pr-2 pt-1">
+        <span className="text-xs text-muted">19:00</span>
+      </div>
+    </div>
+  )
+}
+
+// Grade de slots clicáveis
+function HourGrid({ date, onSlotClick }) {
+  return (
+    <div style={{ height: GRID_HEIGHT }}>
+      {HOURS.map(h => (
+        <div key={h} style={{ height: HOUR_HEIGHT }}
+          className="border-b border-token cursor-pointer transition-colors"
+          onClick={() => { const d = new Date(date); d.setHours(h, 0, 0, 0); onSlotClick(d) }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--brand-light)'}
+          onMouseLeave={e => e.currentTarget.style.background = ''}
+        />
+      ))}
+    </div>
+  )
+}
+
 function DayView({ date, appointments, patients, onSlotClick, onApptClick }) {
   const dayAppts = appointments.filter(a => isSameDay(new Date(a.date), date))
   return (
-    <div className="flex flex-1 overflow-hidden">
-      <div className="w-14 flex-shrink-0 border-r border-token">
-        {HOURS.map(h => (
-          <div key={h} style={{ height: HOUR_HEIGHT }} className="flex items-start justify-end pr-2 pt-1">
-            <span className="text-xs text-muted">{h}:00</span>
-          </div>
-        ))}
-      </div>
-      <div className="flex-1 relative overflow-y-auto">
-        {HOURS.map(h => (
-          <div key={h} style={{ height: HOUR_HEIGHT }}
-            className="border-b border-token cursor-pointer transition-colors"
-            style2={{ borderColor: 'var(--border-soft)' }}
-            onClick={() => { const d = new Date(date); d.setHours(h,0,0,0); onSlotClick(d) }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--brand-light)'}
-            onMouseLeave={e => e.currentTarget.style.background = ''}
-          />
-        ))}
-        {dayAppts.map(a => <ApptBlock key={a.id} appt={a} patient={patients.find(p => p.id === a.patientId)} onClick={onApptClick} />)}
+    <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 overflow-y-auto">
+        <HourLabels />
+        <div className="flex-1 relative" style={{ height: GRID_HEIGHT }}>
+          <HourGrid date={date} onSlotClick={onSlotClick} />
+          {dayAppts.map(a => (
+            <ApptBlock key={a.id} appt={a}
+              patient={patients.find(p => p.id === a.patientId)}
+              onClick={onApptClick} />
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -73,38 +101,35 @@ function DayView({ date, appointments, patients, onSlotClick, onApptClick }) {
 function WeekView({ date, appointments, patients, onSlotClick, onApptClick }) {
   const days = getWeekDays(date)
   return (
-    <div className="flex flex-1 overflow-hidden">
-      <div className="w-14 flex-shrink-0 border-r border-token pt-10">
-        {HOURS.map(h => (
-          <div key={h} style={{ height: HOUR_HEIGHT }} className="flex items-start justify-end pr-2 pt-1">
-            <span className="text-xs text-muted">{h}:00</span>
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+      {/* Header fixo com nomes dos dias */}
+      <div className="flex border-b border-token flex-shrink-0">
+        <div className="w-14 flex-shrink-0" />
+        {days.map(day => (
+          <div key={day.toISOString()} className="flex-1 text-center py-2 border-l border-token"
+            style={{ background: isToday(day) ? 'var(--brand-light)' : 'var(--bg-surface)' }}>
+            <p className="text-xs text-muted capitalize">{format(day, 'EEE', { locale: ptBR })}</p>
+            <p className="text-sm font-semibold"
+              style={{ color: isToday(day) ? 'var(--brand-text)' : 'var(--text-primary)' }}>
+              {format(day, 'd')}
+            </p>
           </div>
         ))}
       </div>
-      <div className="flex-1 overflow-x-auto overflow-y-auto">
-        <div className="flex min-w-[600px]">
+      {/* Área scrollável */}
+      <div className="flex flex-1 overflow-y-auto overflow-x-auto min-h-0">
+        <div className="flex min-w-[600px] w-full">
+          <HourLabels />
           {days.map(day => (
-            <div key={day.toISOString()} className="flex-1 border-r border-token last:border-r-0">
-              <div className="sticky top-0 z-10 text-center py-2 border-b border-token"
-                style={{ background: isToday(day) ? 'var(--brand-light)' : 'var(--bg-surface)' }}>
-                <p className="text-xs text-muted capitalize">{format(day, 'EEE', { locale: ptBR })}</p>
-                <p className="text-sm font-semibold" style={{ color: isToday(day) ? 'var(--brand-text)' : 'var(--text-primary)' }}>
-                  {format(day, 'd')}
-                </p>
-              </div>
-              <div className="relative">
-                {HOURS.map(h => (
-                  <div key={h} style={{ height: HOUR_HEIGHT }}
-                    className="border-b border-token cursor-pointer transition-colors"
-                    onClick={() => { const d = new Date(day); d.setHours(h,0,0,0); onSlotClick(d) }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--brand-light)'}
-                    onMouseLeave={e => e.currentTarget.style.background = ''}
-                  />
-                ))}
-                {appointments.filter(a => isSameDay(new Date(a.date), day)).map(a => (
-                  <ApptBlock key={a.id} appt={a} patient={patients.find(p => p.id === a.patientId)} onClick={onApptClick} />
-                ))}
-              </div>
+            <div key={day.toISOString()}
+              className="flex-1 border-l border-token relative"
+              style={{ height: GRID_HEIGHT }}>
+              <HourGrid date={day} onSlotClick={onSlotClick} />
+              {appointments.filter(a => isSameDay(new Date(a.date), day)).map(a => (
+                <ApptBlock key={a.id} appt={a}
+                  patient={patients.find(p => p.id === a.patientId)}
+                  onClick={onApptClick} />
+              ))}
             </div>
           ))}
         </div>
@@ -114,7 +139,7 @@ function WeekView({ date, appointments, patients, onSlotClick, onApptClick }) {
 }
 
 function MonthView({ date, appointments, patients, onDayClick }) {
-  const days = getMonthDays(date)
+  const days  = getMonthDays(date)
   const weeks = []
   for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7))
 
@@ -131,7 +156,8 @@ function MonthView({ date, appointments, patients, onDayClick }) {
             const dayAppts = appointments.filter(a => isSameDay(new Date(a.date), day))
             const isCurrentMonth = day.getMonth() === date.getMonth()
             return (
-              <motion.div key={day.toISOString()} whileHover={{ scale: 1.02 }} onClick={() => onDayClick(day)}
+              <motion.div key={day.toISOString()} whileHover={{ scale: 1.02 }}
+                onClick={() => onDayClick(day)}
                 className="min-h-[80px] p-1.5 rounded-2xl cursor-pointer border border-token transition-all"
                 style={{
                   background: isToday(day) ? 'var(--brand-light)' : isCurrentMonth ? 'var(--bg-surface)' : 'transparent',
@@ -165,7 +191,7 @@ function MonthView({ date, appointments, patients, onDayClick }) {
 
 export default function Agenda() {
   const { appointments, patients, addAppointment, editAppointment, removeAppointment } = useData()
-  const [view, setView] = useState('week')
+  const [view, setView]             = useState('week')
   const [currentDate, setCurrentDate] = useState(new Date())
   const apptModal   = useModal()
   const detailModal = useModal()
@@ -173,9 +199,9 @@ export default function Agenda() {
   const [selectedDate, setSelectedDate] = useState(null)
 
   const nav = dir => {
-    if (view === 'day')  setCurrentDate(d => dir > 0 ? addDays(d,1)    : subDays(d,1))
-    else if (view === 'week') setCurrentDate(d => dir > 0 ? addWeeks(d,1)   : subWeeks(d,1))
-    else                 setCurrentDate(d => dir > 0 ? addMonths(d,1)  : subMonths(d,1))
+    if (view === 'day')       setCurrentDate(d => dir > 0 ? addDays(d,1)   : subDays(d,1))
+    else if (view === 'week') setCurrentDate(d => dir > 0 ? addWeeks(d,1)  : subWeeks(d,1))
+    else                      setCurrentDate(d => dir > 0 ? addMonths(d,1) : subMonths(d,1))
   }
 
   const title = useMemo(() => {
@@ -191,10 +217,16 @@ export default function Agenda() {
   const selAppt    = detailModal.data
   const selPatient = selAppt ? patients.find(p => p.id === selAppt.patientId) : null
 
+  const viewProps = {
+    appointments, patients,
+    onSlotClick: d => { setSelectedDate(d); apptModal.show() },
+    onApptClick: detailModal.show,
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-4 lg:px-6 py-3 border-b border-token bg-surface">
+      <div className="flex items-center gap-3 px-4 lg:px-6 py-3 border-b border-token bg-surface flex-shrink-0">
         <div className="flex items-center gap-1">
           <button onClick={() => nav(-1)} className="p-1.5 rounded-lg bg-hover hover:bg-active transition-colors">
             <ChevronLeft size={17} className="text-secondary" />
@@ -225,18 +257,16 @@ export default function Agenda() {
       </div>
 
       {/* Calendar body */}
-      <div className="flex-1 overflow-hidden bg-surface">
-        {view === 'day'   && <DayView   date={currentDate} appointments={appointments} patients={patients} onSlotClick={d => { setSelectedDate(d); apptModal.show() }} onApptClick={detailModal.show} />}
-        {view === 'week'  && <WeekView  date={currentDate} appointments={appointments} patients={patients} onSlotClick={d => { setSelectedDate(d); apptModal.show() }} onApptClick={detailModal.show} />}
+      <div className="flex flex-1 min-h-0 overflow-hidden bg-surface">
+        {view === 'day'   && <DayView   date={currentDate} {...viewProps} />}
+        {view === 'week'  && <WeekView  date={currentDate} {...viewProps} />}
         {view === 'month' && <MonthView date={currentDate} appointments={appointments} patients={patients} onDayClick={d => { setCurrentDate(d); setView('day') }} />}
       </div>
 
-      {/* Create */}
       <Modal open={apptModal.open} onClose={apptModal.hide} title="Nova consulta" size="md">
         <AppointmentForm initial={selectedDate ? { date: selectedDate.toISOString() } : null} onSubmit={handleCreate} onCancel={apptModal.hide} />
       </Modal>
 
-      {/* Detail */}
       <Modal open={detailModal.open} onClose={detailModal.hide} title="Detalhes da consulta" size="md">
         {selAppt && (
           <div className="p-6 space-y-4">
@@ -266,7 +296,6 @@ export default function Agenda() {
         )}
       </Modal>
 
-      {/* Edit */}
       <Modal open={editModal.open} onClose={editModal.hide} title="Editar consulta" size="md">
         {editModal.data && <AppointmentForm initial={editModal.data} onSubmit={handleEdit} onCancel={editModal.hide} />}
       </Modal>

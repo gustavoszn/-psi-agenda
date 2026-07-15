@@ -5,11 +5,22 @@ import { login as apiLogin } from '@/services/api'
 const AuthContext = createContext(null)
 
 const toUser = (supabaseUser) => supabaseUser ? {
-  id: supabaseUser.id,
-  email: supabaseUser.email,
-  name: supabaseUser.user_metadata?.name ?? 'Dra. Isabela Pedrozo Silva',
-  crp: supabaseUser.user_metadata?.crp ?? '',
-  photo: supabaseUser.user_metadata?.photo ?? null,
+  id:                     supabaseUser.id,
+  email:                  supabaseUser.email,
+  name:                   supabaseUser.user_metadata?.name                   ?? 'Dra. Isabela Pedrozo Silva',
+  crp:                    supabaseUser.user_metadata?.crp                    ?? '',
+  photo:                  supabaseUser.user_metadata?.photo                  ?? null,
+  phone:                  supabaseUser.user_metadata?.phone                  ?? '',
+  bio:                    supabaseUser.user_metadata?.bio                    ?? '',
+  birthDate:              supabaseUser.user_metadata?.birthDate              ?? '',
+  homeAddress:            supabaseUser.user_metadata?.homeAddress            ?? '',
+  workAddress:            supabaseUser.user_metadata?.workAddress            ?? '',
+  specialty:              supabaseUser.user_metadata?.specialty              ?? '',
+  education:              supabaseUser.user_metadata?.education              ?? '',
+  sessionPrice:           supabaseUser.user_metadata?.sessionPrice           ?? '',
+  defaultSessionDuration: supabaseUser.user_metadata?.defaultSessionDuration ?? '',
+  instagram:              supabaseUser.user_metadata?.instagram              ?? '',
+  site:                   supabaseUser.user_metadata?.site                   ?? '',
 } : null
 
 export function AuthProvider({ children }) {
@@ -40,8 +51,14 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  const updateProfile = async (metadata) => {
+    const { data, error } = await supabase.auth.updateUser({ data: metadata })
+    if (error) throw new Error(error.message)
+    setUser(toUser(data.user))
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )
