@@ -5,78 +5,128 @@
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
-/* ── Paleta de tokens ─────────────────────────────────────────── */
+/* ── Tokens ───────────────────────────────────────────────── */
 :root {
-  /* Fundos */
-  --bg-base:      #f5f1ec;   /* creme suave — fundo geral */
-  --bg-surface:   #faf8f5;   /* quase branco quente — cards, sidebar */
-  --bg-hover:     #ede9e3;   /* hover suave */
-  --bg-active:    #e4ede6;   /* item ativo nav — verde névoa */
+  --bg-base:      #f4f0eb;
+  --bg-surface:   #faf8f5;
+  --bg-hover:     #ede8e1;
+  --bg-active:    #e2ede5;
 
-  /* Bordas */
-  --border:       #e8e2d9;   /* borda creme */
-  --border-soft:  #f0ece6;   /* borda mais suave */
+  --border:       #e5dfd6;
+  --border-soft:  #ede9e3;
 
-  /* Texto */
-  --text-primary:   #2e2a25; /* marrom-escuro */
-  --text-secondary: #7a6f65; /* marrom médio */
-  --text-muted:     #b0a49a; /* bege acinzentado */
+  --text-primary:   #1e1b17;
+  --text-secondary: #6b6058;
+  --text-muted:     #a89e94;
 
-  /* Marca — verde-sálvia */
-  --brand:        #5a8a6a;
-  --brand-light:  #e4ede6;
-  --brand-text:   #3d6b4f;
+  --brand:        #4e7d5e;
+  --brand-hover:  #3d6b4d;
+  --brand-light:  #deeee3;
+  --brand-text:   #2d5a3d;
 
-  /* Acento — rosa-pó */
-  --accent:       #c97b7b;
-  --accent-light: #f5e8e8;
-  --accent-text:  #a05555;
+  --accent:       #c0614f;
+  --accent-light: #faeae7;
+  --accent-text:  #9b3d2d;
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+  --shadow-xl:  0 16px 40px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.06);
 }
 
 .dark {
-  --bg-base:      #1a1714;
-  --bg-surface:   #221f1b;
-  --bg-hover:     #2c2824;
-  --bg-active:    #1e2e22;
+  --bg-base:      #141210;
+  --bg-surface:   #1c1916;
+  --bg-hover:     #252119;
+  --bg-active:    #1a2b1e;
 
-  --border:       #2e2a26;
-  --border-soft:  #272320;
+  --border:       #2a2520;
+  --border-soft:  #221e1a;
 
-  --text-primary:   #ede7df;
-  --text-secondary: #9e9188;
-  --text-muted:     #5c5550;
+  --text-primary:   #f0ebe4;
+  --text-secondary: #9c9088;
+  --text-muted:     #5a5248;
 
-  --brand:        #6fa880;
-  --brand-light:  #1e2e22;
-  --brand-text:   #8dc49e;
+  --brand:        #5e9470;
+  --brand-hover:  #6ea880;
+  --brand-light:  #1a2e1e;
+  --brand-text:   #7ec494;
 
-  --accent:       #c98888;
-  --accent-light: #2e1e1e;
-  --accent-text:  #e0a0a0;
+  --accent:       #d4705e;
+  --accent-light: #2a1510;
+  --accent-text:  #e89080;
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.5);
+  --shadow-xl:  0 16px 40px rgba(0,0,0,0.6);
 }
 
-/* ── Base ─────────────────────────────────────────────────────── */
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+/* ── Reset ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-base);
   color: var(--text-primary);
+  line-height: 1.5;
+  overflow-x: hidden;
 }
 
-/* ── Scrollbar ────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* ── Utilitários de token ─────────────────────────────────────── */
-.bg-surface   { background-color: var(--bg-surface); }
+/* ── Utility classes ──────────────────────────────────────── */
 .bg-base      { background-color: var(--bg-base); }
+.bg-surface   { background-color: var(--bg-surface); }
 .bg-hover     { background-color: var(--bg-hover); }
 .bg-active    { background-color: var(--bg-active); }
 .border-token { border-color: var(--border); }
-.text-primary { color: var(--text-primary); }
+.text-primary   { color: var(--text-primary); }
 .text-secondary { color: var(--text-secondary); }
-.text-muted   { color: var(--text-muted); }
+.text-muted     { color: var(--text-muted); }
+
+.shadow-card { box-shadow: var(--shadow-sm); }
+.shadow-panel { box-shadow: var(--shadow-md); }
+.shadow-modal { box-shadow: var(--shadow-xl); }
+
+/* ── Focus ring ───────────────────────────────────────────── */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ── Animations ───────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border-soft) 50%, var(--bg-hover) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ── Input date/time native fix ───────────────────────────── */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+  filter: invert(0);
+}
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* ── Select native fix ────────────────────────────────────── */
+select option {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+}
