@@ -1,0 +1,82 @@
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+/* ── Paleta de tokens ─────────────────────────────────────────── */
+:root {
+  /* Fundos */
+  --bg-base:      #f5f1ec;   /* creme suave — fundo geral */
+  --bg-surface:   #faf8f5;   /* quase branco quente — cards, sidebar */
+  --bg-hover:     #ede9e3;   /* hover suave */
+  --bg-active:    #e4ede6;   /* item ativo nav — verde névoa */
+
+  /* Bordas */
+  --border:       #e8e2d9;   /* borda creme */
+  --border-soft:  #f0ece6;   /* borda mais suave */
+
+  /* Texto */
+  --text-primary:   #2e2a25; /* marrom-escuro */
+  --text-secondary: #7a6f65; /* marrom médio */
+  --text-muted:     #b0a49a; /* bege acinzentado */
+
+  /* Marca — verde-sálvia */
+  --brand:        #5a8a6a;
+  --brand-light:  #e4ede6;
+  --brand-text:   #3d6b4f;
+
+  /* Acento — rosa-pó */
+  --accent:       #c97b7b;
+  --accent-light: #f5e8e8;
+  --accent-text:  #a05555;
+}
+
+.dark {
+  --bg-base:      #1a1714;
+  --bg-surface:   #221f1b;
+  --bg-hover:     #2c2824;
+  --bg-active:    #1e2e22;
+
+  --border:       #2e2a26;
+  --border-soft:  #272320;
+
+  --text-primary:   #ede7df;
+  --text-secondary: #9e9188;
+  --text-muted:     #5c5550;
+
+  --brand:        #6fa880;
+  --brand-light:  #1e2e22;
+  --brand-text:   #8dc49e;
+
+  --accent:       #c98888;
+  --accent-light: #2e1e1e;
+  --accent-text:  #e0a0a0;
+}
+
+/* ── Base ─────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
+
+/* ── Utilitários de token ─────────────────────────────────────── */
+.bg-surface   { background-color: var(--bg-surface); }
+.bg-base      { background-color: var(--bg-base); }
+.bg-hover     { background-color: var(--bg-hover); }
+.bg-active    { background-color: var(--bg-active); }
+.border-token { border-color: var(--border); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted   { color: var(--text-muted); }
