@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutDashboard, Calendar, Users, Settings, X, Leaf, LogOut } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useTheme } from '@/contexts/ThemeContext'
 import Avatar from '@/components/UI/Avatar'
 
 const NAV = [

@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import * as api from '@/services/api'
 import toast from 'react-hot-toast'
+import { addMonths, addWeeks } from 'date-fns'
+import { hasConflict } from '@/utils/helpers'
 
 const DataContext = createContext({
   patients: [], appointments: [], settings: null, loading: false, notifications: [],
@@ -18,11 +20,11 @@ export function DataProvider({ children }) {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [p, a, s] = await Promise.all([api.getPatients(), api.getAppointments(), api.getSettings()])
-    setPatients(p)
-    setAppointments(a)
-    setSettings(s)
-    setLoading(false)
+    try {
+      const [p, a, s] = await Promise.all([api.getPatients(), api.getAppointments(), api.getSettings()])
+      setPatients(p); setAppointments(a); setSettings(s)
+    } catch (error) { toast.error(error.message || 'Não foi possível carregar os dados.') }
+    finally { setLoading(false) }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -100,10 +102,21 @@ export function DataProvider({ children }) {
 
   const addAppointment = async (data) => {
     try {
-      const a = await api.createAppointment(data)
-      setAppointments(prev => [...prev, a])
-      toast.success('Consulta agendada!')
-      return a
+      const count = data.recurrence === 'once' ? 1 : Number(data.repetitions || 1)
+      const dates = Array.from({ length: count }, (_, index) => {
+        if (data.recurrence === 'monthly') return addMonths(new Date(data.date), index)
+        if (data.recurrence === 'biweekly') return addWeeks(new Date(data.date), index * 2)
+        if (data.recurrence === 'weekly') return addWeeks(new Date(data.date), index)
+        return new Date(data.date)
+      })
+      const conflictDate = dates.find(date => hasConflict(appointments, date, Number(data.duration)))
+      if (conflictDate) throw new Error(`Conflito encontrado em ${conflictDate.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}. Nenhuma consulta foi criada.`)
+      const payload = { ...data }; delete payload.recurrence; delete payload.repetitions
+      const created = []
+      for (const date of dates) created.push(await api.createAppointment({ ...payload, date: date.toISOString() }))
+      setAppointments(prev => [...prev, ...created])
+      toast.success(created.length > 1 ? `${created.length} consultas agendadas!` : 'Consulta agendada!')
+      return created[0]
     } catch (e) { toast.error(e.message); throw e }
   }
 
@@ -142,12 +155,15 @@ export function DataProvider({ children }) {
     setNotifications(prev => prev.filter(n => n.id !== id))
   }
 
+  const restoreDemoData = async () => { await api.restoreDemoData(); await load(); toast.success('Dados demonstrativos restaurados!') }
+  const clearLocalData = async () => { await api.clearLocalData(); await load(); toast.success('Dados locais removidos.') }
+
   return (
     <DataContext.Provider value={{
       patients, appointments, settings, loading, notifications,
       addPatient, editPatient, removePatient,
       addAppointment, editAppointment, removeAppointment,
-      saveSettings, dismissNotification, reload: load,
+      saveSettings, dismissNotification, restoreDemoData, clearLocalData, reload: load,
     }}>
       {children}
     </DataContext.Provider>

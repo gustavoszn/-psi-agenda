@@ -12,7 +12,7 @@ import Avatar from '@/components/UI/Avatar'
 import StatusBadge from '@/components/UI/StatusBadge'
 import { fmtTime, fmtDateLong, MODALITY_CONFIG } from '@/utils/helpers'
 
-function TimelineItem({ appt, patient, index }) {
+function TimelineItem({ appt, patient, index, onPatientClick }) {
   const start = new Date(appt.date)
   const end   = new Date(start.getTime() + appt.duration * 60000)
   const now   = new Date()
@@ -24,7 +24,8 @@ function TimelineItem({ appt, patient, index }) {
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.04 }}
-      className="flex gap-3 p-3.5 rounded-2xl border transition-all"
+      className="flex gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer"
+      onClick={() => patient && onPatientClick(patient.id)}
       style={{
         background: isNow ? 'var(--brand-light)' : 'var(--bg-surface)',
         borderColor: isNow ? 'var(--brand)' : 'var(--border)',
@@ -152,7 +153,7 @@ export default function Dashboard() {
             ? <EmptyState icon={Calendar} message="Nenhuma consulta hoje" />
             : <div className="space-y-2">
                 {todayAppts.map((a, i) => (
-                  <TimelineItem key={a.id} appt={a} patient={getPatient(a.patientId)} index={i} />
+                  <TimelineItem key={a.id} appt={a} patient={getPatient(a.patientId)} index={i} onPatientClick={id => navigate(`/pacientes/${id}`)} />
                 ))}
               </div>
           }
@@ -171,7 +172,8 @@ export default function Dashboard() {
                     <motion.div key={a.id}
                       initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.04 }}
-                      className="flex items-center gap-3 p-3.5 rounded-2xl border border-token"
+                      onClick={() => p && navigate(`/pacientes/${p.id}`)}
+                      className="flex items-center gap-3 p-3.5 rounded-2xl border border-token cursor-pointer"
                       style={{ background: 'var(--bg-surface)' }}
                     >
                       <Avatar name={p?.name} photo={p?.photo} size="sm" />

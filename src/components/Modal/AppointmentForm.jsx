@@ -61,6 +61,8 @@ export default function AppointmentForm({ initial, onSubmit, onCancel }) {
       meetingLink: initial?.meetingLink || '',
       status:      initial?.status      || 'scheduled',
       notes:       initial?.notes       || '',
+      recurrence:  'once',
+      repetitions: 4,
     },
   })
 
@@ -75,7 +77,7 @@ export default function AppointmentForm({ initial, onSubmit, onCancel }) {
     const c = hasConflict(appointments, new Date(watchDate), Number(watchDuration), initial?.id)
     setConflict(c)
     setSuggestions(c && settings ? getSuggestedSlots(new Date(watchDate), Number(watchDuration), appointments, settings) : [])
-  }, [watchDate, watchDuration])
+  }, [watchDate, watchDuration, settings, appointments, initial?.id])
 
   const submit = async (data) => {
     if (conflict) return
@@ -176,6 +178,18 @@ export default function AppointmentForm({ initial, onSubmit, onCancel }) {
       )}
 
       <Textarea label="Observações" rows={3} placeholder="Anotações..." {...register('notes')} />
+
+      {!initial?.id && (
+        <div className="grid grid-cols-2 gap-4">
+          <Select label="Recorrência" {...register('recurrence')}>
+            <option value="once">Consulta única</option>
+            <option value="weekly">Semanal</option>
+            <option value="biweekly">Quinzenal</option>
+            <option value="monthly">Mensal</option>
+          </Select>
+          {watch('recurrence') !== 'once' && <Input label="Quantidade" type="number" min={2} max={24} error={errors.repetitions?.message} {...register('repetitions', { min: { value: 2, message: 'Mínimo 2' }, max: { value: 24, message: 'Máximo 24' } })} />}
+        </div>
+      )}
 
       {/* Bloqueio visual quando há erros impeditivos */}
       {hasBlocker && (

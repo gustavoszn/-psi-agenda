@@ -5,6 +5,7 @@ import Header from '@/components/Header/Header'
 
 const TITLES = {
   '/':              'Dashboard',
+  '/dashboard':     'Dashboard',
   '/agenda':        'Agenda',
   '/pacientes':     'Pacientes',
   '/configuracoes': 'Configurações',
@@ -13,7 +14,7 @@ const TITLES = {
 export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { pathname } = useLocation()
-  const title = TITLES[pathname] || 'PsiAgenda'
+  const title = pathname.startsWith('/pacientes/') ? 'Detalhes do paciente' : TITLES[pathname] || 'PsiAgenda'
 
   return (
     <div className="flex h-screen overflow-hidden bg-base">

@@ -74,7 +74,7 @@ export default function PatientForm({ initial, onSubmit, onCancel }) {
   const [loading, setLoading] = useState(false)
   const [cepLoading, setCepLoading] = useState(false)
 
-  const { register, handleSubmit, control, setValue, watch } = useForm({
+  const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm({
     defaultValues: initial || {
       name: '', photo: null, cpf: '', phone: '', email: '',
       cep: '', street: '', addressNumber: '', complement: '',
@@ -113,7 +113,7 @@ export default function PatientForm({ initial, onSubmit, onCancel }) {
         <PhotoField field={field} name={name} />
       )} />
 
-      <Input label="Nome" placeholder="Nome completo" {...register('name')} />
+      <Input label="Nome" placeholder="Nome completo" error={errors.name?.message} {...register('name', { required: 'Informe o nome do paciente', minLength: { value: 3, message: 'Informe ao menos 3 caracteres' } })} />
 
       <div className="grid grid-cols-2 gap-3">
         <Controller name="cpf" control={control} render={({ field }) => (
@@ -126,7 +126,7 @@ export default function PatientForm({ initial, onSubmit, onCancel }) {
         )} />
       </div>
 
-      <Input label="E-mail" type="email" placeholder="paciente@email.com" {...register('email')} />
+      <Input label="E-mail" type="email" placeholder="paciente@email.com" error={errors.email?.message} {...register('email', { pattern: { value: /^$|^\S+@\S+\.\S+$/, message: 'Informe um e-mail válido' } })} />
 
       {/* Endereço */}
       <div className="space-y-3 rounded-2xl border border-token p-4" style={{ background: 'var(--bg-hover)' }}>

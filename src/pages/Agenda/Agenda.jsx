@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Plus, Video } from 'lucide-react'
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, isSameDay, isToday, getHours, getMinutes } from 'date-fns'
@@ -11,6 +11,7 @@ import StatusBadge from '@/components/UI/StatusBadge'
 import Avatar from '@/components/UI/Avatar'
 import Button from '@/components/UI/Button'
 import { useModal } from '@/hooks/useModal'
+import { Link } from 'react-router-dom'
 
 const HOUR_HEIGHT = 64
 const START_HOUR  = 7
@@ -79,6 +80,15 @@ function HourGrid({ date, onSlotClick }) {
   )
 }
 
+function CurrentTimeLine({ date }) {
+  const [now, setNow] = useState(new Date())
+  useEffect(() => { const timer = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(timer) }, [])
+  if (!isToday(date)) return null
+  const top = ((getHours(now) - START_HOUR) + getMinutes(now) / 60) * HOUR_HEIGHT
+  if (top < 0 || top > GRID_HEIGHT) return null
+  return <div className="absolute left-0 right-0 z-20 pointer-events-none" style={{ top, borderTop: '2px solid var(--accent)' }}><span className="absolute -left-1 -top-1.5 h-3 w-3 rounded-full" style={{ background: 'var(--accent)' }} /></div>
+}
+
 function DayView({ date, appointments, patients, onSlotClick, onApptClick }) {
   const dayAppts = appointments.filter(a => isSameDay(new Date(a.date), date))
   return (
@@ -87,6 +97,7 @@ function DayView({ date, appointments, patients, onSlotClick, onApptClick }) {
         <HourLabels />
         <div className="flex-1 relative" style={{ height: GRID_HEIGHT }}>
           <HourGrid date={date} onSlotClick={onSlotClick} />
+          <CurrentTimeLine date={date} />
           {dayAppts.map(a => (
             <ApptBlock key={a.id} appt={a}
               patient={patients.find(p => p.id === a.patientId)}
@@ -125,6 +136,7 @@ function WeekView({ date, appointments, patients, onSlotClick, onApptClick }) {
               className="flex-1 border-l border-token relative"
               style={{ height: GRID_HEIGHT }}>
               <HourGrid date={day} onSlotClick={onSlotClick} />
+              <CurrentTimeLine date={day} />
               {appointments.filter(a => isSameDay(new Date(a.date), day)).map(a => (
                 <ApptBlock key={a.id} appt={a}
                   patient={patients.find(p => p.id === a.patientId)}
@@ -158,7 +170,7 @@ function MonthView({ date, appointments, patients, onDayClick }) {
             return (
               <motion.div key={day.toISOString()} whileHover={{ scale: 1.02 }}
                 onClick={() => onDayClick(day)}
-                className="min-h-[80px] p-1.5 rounded-2xl cursor-pointer border border-token transition-all"
+                className="min-h-[56px] sm:min-h-[80px] p-1 sm:p-1.5 rounded-lg sm:rounded-2xl cursor-pointer border border-token transition-all"
                 style={{
                   background: isToday(day) ? 'var(--brand-light)' : isCurrentMonth ? 'var(--bg-surface)' : 'transparent',
                   opacity: isCurrentMonth ? 1 : 0.35,
@@ -213,6 +225,7 @@ export default function Agenda() {
   const handleCreate = async data => { await addAppointment(data); apptModal.hide() }
   const handleEdit   = async data => { await editAppointment(editModal.data.id, data); editModal.hide() }
   const handleDelete = async ()   => { await removeAppointment(detailModal.data.id); detailModal.hide() }
+  const handleStatus = async status => { await editAppointment(detailModal.data.id, { ...detailModal.data, status }); detailModal.hide() }
 
   const selAppt    = detailModal.data
   const selPatient = selAppt ? patients.find(p => p.id === selAppt.patientId) : null
@@ -226,7 +239,7 @@ export default function Agenda() {
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-4 lg:px-6 py-3 border-b border-token bg-surface flex-shrink-0">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-6 py-3 border-b border-token bg-surface flex-shrink-0">
         <div className="flex items-center gap-1">
           <button onClick={() => nav(-1)} className="p-1.5 rounded-lg bg-hover hover:bg-active transition-colors">
             <ChevronLeft size={17} className="text-secondary" />
@@ -239,7 +252,7 @@ export default function Agenda() {
           </button>
         </div>
 
-        <h2 className="text-sm font-semibold text-primary flex-1 capitalize">{title}</h2>
+        <h2 className="text-sm font-semibold text-primary flex-1 min-w-[140px] capitalize truncate">{title}</h2>
 
         <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: 'var(--bg-hover)' }}>
           {[['day','Dia'],['week','Semana'],['month','Mês']].map(([v,l]) => (
@@ -251,8 +264,8 @@ export default function Agenda() {
           ))}
         </div>
 
-        <Button size="sm" onClick={() => { setSelectedDate(null); apptModal.show() }}>
-          <Plus size={14} /> Nova consulta
+        <Button size="sm" className="max-sm:ml-auto" onClick={() => { setSelectedDate(null); apptModal.show() }}>
+          <Plus size={14} /> <span className="max-sm:hidden">Nova consulta</span>
         </Button>
       </div>
 
@@ -273,7 +286,7 @@ export default function Agenda() {
             <div className="flex items-center gap-3">
               <Avatar name={selPatient?.name} photo={selPatient?.photo} size="md" />
               <div>
-                <p className="font-semibold text-primary">{selPatient?.name}</p>
+                <Link to={`/pacientes/${selPatient?.id}`} onClick={detailModal.hide} className="font-semibold text-primary hover:underline">{selPatient?.name}</Link>
                 <p className="text-sm text-muted">{fmtTime(selAppt.date)} · {selAppt.duration} min · {MODALITY_CONFIG[selAppt.modality]?.label}</p>
               </div>
               <div className="ml-auto"><StatusBadge status={selAppt.status} /></div>
@@ -288,6 +301,12 @@ export default function Agenda() {
             {selAppt.notes && (
               <p className="text-sm text-secondary rounded-xl p-3" style={{ background: 'var(--bg-hover)' }}>{selAppt.notes}</p>
             )}
+            <div className="flex flex-wrap gap-2">
+              {selAppt.status !== 'confirmed' && <Button size="sm" variant="outline" onClick={() => handleStatus('confirmed')}>Confirmar</Button>}
+              {selAppt.status !== 'done' && <Button size="sm" variant="outline" onClick={() => handleStatus('done')}>Realizada</Button>}
+              {selAppt.status !== 'missed' && <Button size="sm" variant="outline" onClick={() => handleStatus('missed')}>Marcar falta</Button>}
+              {selAppt.status !== 'cancelled' && <Button size="sm" variant="outline" onClick={() => handleStatus('cancelled')}>Cancelar consulta</Button>}
+            </div>
             <div className="flex gap-2 pt-2">
               <Button variant="danger" size="sm" onClick={handleDelete}>Excluir</Button>
               <Button variant="outline" size="sm" onClick={() => { detailModal.hide(); setTimeout(() => editModal.show(selAppt), 100) }} className="flex-1">Editar</Button>

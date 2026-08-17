@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
-import { Plus, X, Save, User, Calendar, Camera, MapPin, Phone, Award, Clock, Briefcase } from 'lucide-react'
+import { Plus, X, Save, User, Calendar, Camera, MapPin, Phone, Award, Clock, Briefcase, Database, RotateCcw, Trash2 } from 'lucide-react'
 import { useData } from '@/contexts/DataContext'
 import { useAuth } from '@/contexts/AuthContext'
 import Input, { Textarea } from '@/components/UI/Input'
@@ -55,7 +55,7 @@ function PerfilTab() {
     },
   })
 
-  useEffect(() => { if (user) reset({ ...user }) }, [user])
+  useEffect(() => { if (user) reset({ ...user }) }, [user, reset])
 
   const handlePhoto = (e) => {
     const file = e.target.files?.[0]
@@ -280,6 +280,10 @@ function AgendaTab() {
 // ── Página principal ──────────────────────────────────────────
 export default function Configuracoes() {
   const [tab, setTab] = useState('perfil')
+  const { restoreDemoData, clearLocalData } = useData()
+
+  const restore = async () => { if (window.confirm('Restaurar os dados demonstrativos? As alterações locais serão substituídas.')) await restoreDemoData() }
+  const clear = async () => { if (window.confirm('Limpar pacientes e consultas locais? Esta ação não poderá ser desfeita.')) await clearLocalData() }
 
   return (
     <div className="p-4 lg:p-6">
@@ -287,10 +291,20 @@ export default function Configuracoes() {
         <div className="flex gap-2">
           <Tab active={tab === 'perfil'}  onClick={() => setTab('perfil')}>Perfil</Tab>
           <Tab active={tab === 'agenda'}  onClick={() => setTab('agenda')}>Agenda</Tab>
+          <Tab active={tab === 'dados'} onClick={() => setTab('dados')}>Dados</Tab>
         </div>
 
         {tab === 'perfil' && <PerfilTab />}
         {tab === 'agenda' && <AgendaTab />}
+        {tab === 'dados' && (
+          <Section title="Dados locais" icon={Database}>
+            <p className="text-sm text-secondary">Os dados desta demonstração ficam somente neste navegador. Você pode restaurar o cenário inicial ou limpar pacientes e consultas.</p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Button variant="outline" onClick={restore}><RotateCcw size={15} /> Restaurar demonstração</Button>
+              <Button variant="danger" onClick={clear}><Trash2 size={15} /> Limpar dados locais</Button>
+            </div>
+          </Section>
+        )}
       </div>
     </div>
   )

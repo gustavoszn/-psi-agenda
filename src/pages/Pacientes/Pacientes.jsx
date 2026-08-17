@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus, Search, ChevronRight, UserCheck, UserX } from 'lucide-react'
 import { differenceInYears } from 'date-fns'
@@ -15,7 +16,7 @@ import StatusBadge from '@/components/UI/StatusBadge'
 import ConfirmDialog from '@/components/UI/ConfirmDialog'
 import { ListSkeleton } from '@/components/UI/Skeleton'
 
-function PatientDetail({ patient, appointments, onEdit, onDelete, onNewAppt }) {
+function PatientDetail({ patient, appointments, onEdit, onDelete, onNewAppt, onOpenProfile }) {
   const patientAppts = appointments.filter(a => a.patientId === patient.id).sort((a,b) => new Date(b.date)-new Date(a.date))
   const last = patientAppts.find(a => a.status === 'done')
   const next = patientAppts.find(a => new Date(a.date) > new Date() && !['cancelled','missed'].includes(a.status))
@@ -72,12 +73,14 @@ function PatientDetail({ patient, appointments, onEdit, onDelete, onNewAppt }) {
       <div className="flex gap-2 pt-2 border-t border-token">
         <Button variant="danger" size="sm" onClick={onDelete}>Excluir</Button>
         <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">Editar</Button>
+        <Button size="sm" onClick={onOpenProfile}>Ver perfil</Button>
       </div>
     </div>
   )
 }
 
 export default function Pacientes() {
+  const navigate = useNavigate()
   const { patients, appointments, addPatient, editPatient, removePatient, addAppointment, loading } = useData()
   const { query, setQuery, results } = useSearch(patients, ['name','phone','email'])
   const [filter, setFilter] = useState('all')
@@ -164,7 +167,8 @@ export default function Pacientes() {
           <PatientDetail patient={detailModal.data} appointments={appointments}
             onEdit={() => editModal.show(detailModal.data)}
             onDelete={() => confirmModal.show(detailModal.data.id)}
-            onNewAppt={() => apptModal.show()} />
+            onNewAppt={() => apptModal.show()}
+            onOpenProfile={() => navigate(`/pacientes/${detailModal.data.id}`)} />
         )}
       </Modal>
 

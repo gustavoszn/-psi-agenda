@@ -1,146 +1,77 @@
-import { supabase } from './supabase'
+import { mockAppointments, mockPatients, mockSettings, mockUser } from './mockData'
 
-const uid = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
-  return user.id
+const KEYS = { patients: 'psi_patients', appointments: 'psi_appointments', settings: 'psi_settings', user: 'psi_user', session: 'psi_session' }
+const clone = value => JSON.parse(JSON.stringify(value))
+const delay = value => new Promise(resolve => setTimeout(() => resolve(clone(value)), 100))
+const read = (key, fallback) => {
+  try { return JSON.parse(localStorage.getItem(key)) ?? clone(fallback) }
+  catch { localStorage.removeItem(key); return clone(fallback) }
 }
-
-const handle = ({ data, error }) => {
-  if (error) throw new Error(error.message)
-  return data
+const write = (key, value) => { localStorage.setItem(key, JSON.stringify(value)); return value }
+const uid = prefix => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+const seed = () => {
+  if (!localStorage.getItem(KEYS.patients)) write(KEYS.patients, mockPatients)
+  if (!localStorage.getItem(KEYS.appointments)) write(KEYS.appointments, mockAppointments)
+  if (!localStorage.getItem(KEYS.settings)) write(KEYS.settings, mockSettings)
 }
+seed()
 
-// --- Mappers ---
-const patientToDB = (d) => ({
-  name:             d.name,
-  email:            d.email            || null,
-  phone:            d.phone            || null,
-  whatsapp:         d.whatsapp         || null,
-  cpf:              d.cpf              || null,
-  birth_date:       d.birthDate        || null,
-  address:          d.street ? `${d.street}${d.addressNumber ? ', '+d.addressNumber : ''}${d.complement ? ' '+d.complement : ''}, ${d.neighborhood || ''}, ${d.city || ''} - ${d.state || ''}`.trim() : (d.address || null),
-  number:           d.addressNumber    || d.number || null,
-  cep:              d.cep              || null,
-  notes:            d.notes            || null,
-  status:           d.status           || 'active',
-  photo:            d.photo            || null,
-})
-
-const patientFromDB = (d) => d ? ({
-  id:             d.id,
-  name:           d.name,
-  email:          d.email,
-  phone:          d.phone,
-  cpf:            d.cpf,
-  cep:            d.cep,
-  street:         d.address   || '',
-  addressNumber:  d.number    || '',
-  complement:     '',
-  neighborhood:   '',
-  city:           '',
-  state:          '',
-  notes:          d.notes,
-  status:         d.status,
-  photo:          d.photo,
-  createdAt:      d.created_at,
-}) : null
-
-const apptToDB = (d) => ({
-  patient_id:   d.patientId,
-  date:         d.date,
-  duration:     d.duration     || 50,
-  modality:     d.modality     || 'presencial',
-  meeting_link: d.meetingLink  || null,
-  status:       d.status       || 'scheduled',
-  notes:        d.notes        || null,
-})
-
-const apptFromDB = (d) => d ? ({
-  id:          d.id,
-  patientId:   d.patient_id,
-  date:        d.date,
-  duration:    d.duration,
-  modality:    d.modality,
-  meetingLink: d.meeting_link,
-  status:      d.status,
-  notes:       d.notes,
-  createdAt:   d.created_at,
-}) : null
-
-// --- Patients ---
-export const getPatients = async () => {
-  const rows = handle(await supabase.from('patients').select('*').order('name'))
-  return rows.map(patientFromDB)
+export const getPatients = () => delay(read(KEYS.patients, mockPatients))
+export const getPatient = async id => (await getPatients()).find(item => item.id === id) ?? null
+export const createPatient = async data => {
+  const item = { ...data, id: uid('patient'), createdAt: new Date().toISOString() }
+  write(KEYS.patients, [...read(KEYS.patients, mockPatients), item]); return delay(item)
 }
-
-export const getPatient = async (id) => {
-  const { data, error } = await supabase.from('patients').select('*').eq('id', id).single()
-  if (error) return null
-  return patientFromDB(data)
-}
-
-export const createPatient = async (data) => {
-  const user_id = await uid()
-  const row = handle(await supabase.from('patients').insert({ ...patientToDB(data), user_id }).select().single())
-  return patientFromDB(row)
-}
-
 export const updatePatient = async (id, data) => {
-  const row = handle(await supabase.from('patients').update(patientToDB(data)).eq('id', id).select().single())
-  return patientFromDB(row)
+  const rows = read(KEYS.patients, mockPatients)
+  const item = { ...rows.find(row => row.id === id), ...data, id, updatedAt: new Date().toISOString() }
+  write(KEYS.patients, rows.map(row => row.id === id ? item : row)); return delay(item)
+}
+export const deletePatient = async id => {
+  write(KEYS.patients, read(KEYS.patients, mockPatients).filter(row => row.id !== id))
+  write(KEYS.appointments, read(KEYS.appointments, mockAppointments).filter(row => row.patientId !== id)); return delay(true)
 }
 
-export const deletePatient = async (id) =>
-  handle(await supabase.from('patients').delete().eq('id', id))
-
-// --- Appointments ---
-export const getAppointments = async () => {
-  const rows = handle(await supabase.from('appointments').select('*').order('date'))
-  return rows.map(apptFromDB)
+export const getAppointments = () => delay(read(KEYS.appointments, mockAppointments))
+export const createAppointment = async data => {
+  const item = { ...data, id: uid('appointment'), createdAt: new Date().toISOString(), history: [] }
+  write(KEYS.appointments, [...read(KEYS.appointments, mockAppointments), item]); return delay(item)
 }
-
-export const createAppointment = async (data) => {
-  const user_id = await uid()
-  const row = handle(await supabase.from('appointments').insert({ ...apptToDB(data), user_id }).select().single())
-  return apptFromDB(row)
-}
-
 export const updateAppointment = async (id, data) => {
-  const row = handle(await supabase.from('appointments').update(apptToDB(data)).eq('id', id).select().single())
-  return apptFromDB(row)
+  const rows = read(KEYS.appointments, mockAppointments); const old = rows.find(row => row.id === id)
+  const item = { ...old, ...data, id, updatedAt: new Date().toISOString(), history: [...(old?.history || []), { at: new Date().toISOString(), action: 'Consulta atualizada' }] }
+  write(KEYS.appointments, rows.map(row => row.id === id ? item : row)); return delay(item)
 }
+export const deleteAppointment = async id => { write(KEYS.appointments, read(KEYS.appointments, mockAppointments).filter(row => row.id !== id)); return delay(true) }
+export const getSettings = () => delay(read(KEYS.settings, mockSettings))
+export const updateSettings = async data => delay(write(KEYS.settings, data))
 
-export const deleteAppointment = async (id) =>
-  handle(await supabase.from('appointments').delete().eq('id', id))
-
-// --- Settings ---
-export const getSettings = async () => {
-  const user_id = await uid()
-  const { data } = await supabase.from('settings').select('data').eq('user_id', user_id).single()
-  return data?.data ?? {
-    workDays: [1,2,3,4,5],
-    startHour: 7, endHour: 22,
-    lunchStart: 12, lunchEnd: 13,
-    intervalBetween: 10, defaultDuration: 50,
-    blockedDates: [],
-  }
+export const getStoredSession = () => {
+  try {
+    const session = read(KEYS.session, null) || JSON.parse(sessionStorage.getItem(KEYS.session))
+    return session && !session.role ? { ...session, role: 'professional' } : session
+  } catch { return null }
 }
-
-export const updateSettings = async (payload) => {
-  const user_id = await uid()
-  handle(await supabase.from('settings').upsert({ user_id, data: payload, updated_at: new Date().toISOString() }))
-  return payload
+export const login = async (email, password, remember = true) => {
+  if (!/^\S+@\S+\.\S+$/.test(email || '') || (password || '').length < 4) throw new Error('Informe um e-mail válido e uma senha com ao menos 4 caracteres.')
+  const user = { ...read(KEYS.user, mockUser), email, role: 'professional' }; write(KEYS.user, user)
+  if (remember) write(KEYS.session, user); else sessionStorage.setItem(KEYS.session, JSON.stringify(user))
+  return delay(user)
 }
-
-// --- Auth ---
-export const login = async (email, password) => {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw new Error('Credenciais inválidas')
-  return {
-    id:    data.user.id,
-    email: data.user.email,
-    name:  data.user.user_metadata?.name  ?? 'Dra. Isabela Pedrozo Silva',
-    crp:   data.user.user_metadata?.crp   ?? '',
-    photo: data.user.user_metadata?.photo ?? null,
-  }
+export const loginPatient = async (email, password, remember = true) => {
+  if (!/^\S+@\S+\.\S+$/.test(email || '') || (password || '').length < 4) throw new Error('Informe um e-mail válido e uma senha com ao menos 4 caracteres.')
+  const patient = read(KEYS.patients, mockPatients).find(item => item.email?.toLowerCase() === email.toLowerCase() && item.status === 'active')
+  if (!patient) throw new Error('Não encontramos um paciente ativo com este e-mail.')
+  const user = { id: patient.id, patientId: patient.id, name: patient.name, email: patient.email, photo: patient.photo, role: 'patient' }
+  if (remember) write(KEYS.session, user); else sessionStorage.setItem(KEYS.session, JSON.stringify(user))
+  return delay(user)
 }
+export const logout = async () => { localStorage.removeItem(KEYS.session); sessionStorage.removeItem(KEYS.session); return delay(true) }
+export const updateUser = async data => {
+  const user = { ...read(KEYS.user, mockUser), ...data }; write(KEYS.user, user)
+  if (localStorage.getItem(KEYS.session)) write(KEYS.session, user)
+  if (sessionStorage.getItem(KEYS.session)) sessionStorage.setItem(KEYS.session, JSON.stringify(user))
+  return delay(user)
+}
+export const restoreDemoData = async () => { write(KEYS.patients, mockPatients); write(KEYS.appointments, mockAppointments); write(KEYS.settings, mockSettings); return delay(true) }
+export const clearLocalData = async () => { write(KEYS.patients, []); write(KEYS.appointments, []); write(KEYS.settings, mockSettings); return delay(true) }
